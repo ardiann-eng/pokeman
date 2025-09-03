@@ -10,6 +10,10 @@ class PokemonPacman {
         this.trainerRankElement = document.getElementById('trainerRank');
         this.restartBtn = document.getElementById('restartBtn');
         
+        // Mobile detection and performance optimization
+        this.isMobile = this.detectMobile();
+        this.performanceMode = this.isMobile;
+        
         // Game state
         this.gameRunning = false;
         this.score = 0;
@@ -21,11 +25,15 @@ class PokemonPacman {
         // Animation variables
         this.animationTime = 0;
         this.mouthAnimation = 0; // For Pac-Man mouth animation
+        this.frameCount = 0;
         
         // Grid settings
         this.gridSize = 40;
         this.cols = this.canvas.width / this.gridSize;
         this.rows = this.canvas.height / this.gridSize;
+        
+        // Performance optimization
+        this.setupCanvasOptimization();
         
         // Player (Pikachu)
         this.player = {
@@ -60,6 +68,38 @@ class PokemonPacman {
         // Game loop
         this.lastTime = 0;
         this.gameLoop = this.gameLoop.bind(this);
+    }
+    
+    detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
+               window.innerWidth <= 768;
+    }
+    
+    setupCanvasOptimization() {
+        // Optimize canvas for mobile performance
+        if (this.isMobile) {
+            // Reduce canvas resolution on mobile for better performance
+            const rect = this.canvas.getBoundingClientRect();
+            const scale = window.devicePixelRatio || 1;
+            
+            // Set actual size in memory (scaled down for performance)
+            this.canvas.width = rect.width * Math.min(scale, 2);
+            this.canvas.height = rect.height * Math.min(scale, 2);
+            
+            // Scale the drawing context so everything draws at the correct size
+            this.ctx.scale(Math.min(scale, 2), Math.min(scale, 2));
+            
+            // Disable image smoothing for pixel-perfect rendering
+            this.ctx.imageSmoothingEnabled = false;
+            this.ctx.webkitImageSmoothingEnabled = false;
+            this.ctx.mozImageSmoothingEnabled = false;
+            this.ctx.msImageSmoothingEnabled = false;
+            
+            // Recalculate grid based on new canvas size
+            this.cols = Math.floor(this.canvas.width / (this.gridSize * Math.min(scale, 2)));
+            this.rows = Math.floor(this.canvas.height / (this.gridSize * Math.min(scale, 2)));
+        }
     }
     
     createMap() {
@@ -157,9 +197,31 @@ class PokemonPacman {
         // Create Pokemon-themed sound effects using Web Audio API
         this.audioContext = null;
         try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Enhanced compatibility for older Android browsers
+            const AudioContext = window.AudioContext || 
+                               window.webkitAudioContext || 
+                               window.mozAudioContext || 
+                               window.oAudioContext || 
+                               window.msAudioContext;
+            
+            if (AudioContext) {
+                this.audioContext = new AudioContext();
+                
+                // Handle suspended audio context (required for mobile browsers)
+                if (this.audioContext.state === 'suspended') {
+                    const resumeAudio = () => {
+                        this.audioContext.resume();
+                        document.removeEventListener('touchstart', resumeAudio);
+                        document.removeEventListener('click', resumeAudio);
+                    };
+                    document.addEventListener('touchstart', resumeAudio);
+                    document.addEventListener('click', resumeAudio);
+                }
+            } else {
+                throw new Error('AudioContext not supported');
+            }
         } catch (e) {
-            console.log('Web Audio API not supported');
+            console.log('Web Audio API not supported:', e);
             this.audioEnabled = false;
             return;
         }
@@ -209,6 +271,7 @@ class PokemonPacman {
     }
     
     setupControls() {
+        // Keyboard controls
         document.addEventListener('keydown', (e) => {
             if (!this.gameRunning) return;
             
@@ -229,9 +292,71 @@ class PokemonPacman {
             e.preventDefault();
         });
         
+        // Touch controls for mobile devices
+        this.setupTouchControls();
+        
         this.restartBtn.addEventListener('click', () => {
             this.resetGame();
         });
+    }
+    
+    setupTouchControls() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        const minSwipeDistance = 30;
+        
+        // Touch events for swipe gestures
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        }, { passive: false });
+        
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (!this.gameRunning) return;
+            
+            const touch = e.changedTouches[0];
+            touchEndX = touch.clientX;
+            touchEndY = touch.clientY;
+            
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const absDeltaX = Math.abs(deltaX);
+            const absDeltaY = Math.abs(deltaY);
+            
+            // Determine swipe direction
+            if (Math.max(absDeltaX, absDeltaY) > minSwipeDistance) {
+                if (absDeltaX > absDeltaY) {
+                    // Horizontal swipe
+                    this.player.nextDirection = deltaX > 0 ? 'right' : 'left';
+                } else {
+                    // Vertical swipe
+                    this.player.nextDirection = deltaY > 0 ? 'down' : 'up';
+                }
+            }
+        }, { passive: false });
+        
+        // Tap controls for direction buttons (if added to UI)
+        document.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (target.classList.contains('direction-btn')) {
+                e.preventDefault();
+                if (!this.gameRunning) return;
+                
+                const direction = target.dataset.direction;
+                if (direction) {
+                    this.player.nextDirection = direction;
+                }
+            }
+        }, { passive: false });
     }
     
     canMove(x, y) {
@@ -693,7 +818,7 @@ class PokemonPacman {
     }
     
     getTrainerRank(score) {
-        if (score >= 2000) return 'Pokemon Master';
+        if (score >= 2000) return 'Pokeman Master';
         if (score >= 1500) return 'Elite Trainer';
         if (score >= 1000) return 'Gym Leader';
         if (score >= 700) return 'Ace Trainer';
@@ -750,10 +875,14 @@ class PokemonPacman {
         // Update animation time
         this.animationTime = currentTime;
         this.mouthAnimation = Math.sin(currentTime * 0.01) * 0.5 + 0.5; // 0 to 1
+        this.frameCount++;
         
         const deltaTime = currentTime - this.lastTime;
         
-        if (deltaTime >= 200) { // Game speed (200ms per frame)
+        // Adjust game speed based on device performance
+        const gameSpeed = this.performanceMode ? 250 : 200; // Slower on mobile for better performance
+        
+        if (deltaTime >= gameSpeed) {
             this.movePlayer();
             this.moveEnemies();
             this.checkCollisions();
@@ -761,10 +890,53 @@ class PokemonPacman {
             this.lastTime = currentTime;
         }
         
-        this.render();
+        // Reduce render frequency on mobile devices
+        const shouldRender = this.performanceMode ? (this.frameCount % 2 === 0) : true;
+        
+        if (shouldRender) {
+            this.render();
+        }
+        
         requestAnimationFrame(this.gameLoop);
     }
 }
+
+// Polyfills for older browsers
+(function() {
+    // RequestAnimationFrame polyfill
+    let lastTime = 0;
+    const vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(let x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback) {
+            const currTime = new Date().getTime();
+            const timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            const id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+        
+    // Performance.now polyfill
+    if (!window.performance) {
+        window.performance = {};
+    }
+    if (!window.performance.now) {
+        window.performance.now = function() {
+            return Date.now();
+        };
+    }
+})();
 
 // Start the game when page loads
 window.addEventListener('load', () => {
