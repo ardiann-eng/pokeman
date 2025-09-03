@@ -2,60 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokeman</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="alternate icon" href="favicon.svg">
-    <link rel="stylesheet" href="google-pacman.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
-        <div class="game-content">
-            <div class="game-header">
-                <h1 class="google-title">
-                    <span class="letter p1">P</span>
-                    <span class="letter o1">o</span>
-                    <span class="letter k2">k</span>
-                    <span class="letter e2">e</span>
-                    <span class="letter m">m</span>
-                    <span class="letter a">a</span>
-                    <span class="letter n">n</span>
-                </h1>
-                <div class="game-info">
-                    <div class="score">Score: <span id="score">0</span></div>
-                    <div class="lives">Lives: <span id="lives">3</span></div>
-                    <div class="level">Level: <span id="level">1</span></div>
-                </div>
-            </div>
-            
-            <div class="mobile-controls">
-                Swipe to move Pikachu!
-            </div>
-            
-            <div class="arena-wrapper">
-                <canvas id="gameCanvas" width="900" height="600"></canvas>
-                <div class="neon-border"></div>
-            </div>
-            
-            <div class="game-controls">
-                <p>Use arrow keys to move Pacman through the Google maze!</p>
-                <p>Collect all dots to complete the level</p>
-                <p>Grab power pellets to eat the ghosts</p>
-                <p>Avoid the colorful ghosts or lose a life</p>
-            </div>
-            
-            <div id="gameOver" class="game-over hidden">
-                <h2>Game Over!</h2>
-                <p>🏆 Final Score: <span id="finalScore">0</span></p>
-                <p>🎮 Thanks for playing Google Pacman!</p>
-                <button id="restartBtn">Play Again</button>
+        <div class="game-header">
+            <h1>Poke-man</h1>
+            <div class="game-info">
+                <div class="score">Score: <span id="score" data-label="POINTS">0</span></div>
+                <div class="lives">Lives: <span id="lives" data-label="HP">3</span></div>
+                <div class="level">Level: <span id="level" data-label="AREA">1</span></div>
             </div>
         </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="game-controls">
+            <p>Use arrow keys to move Pikachu around the Pokemon world!</p>
+            <p>Collect pokeballs (+10), visit Pokemon Centers (+50), find Power Berries (+100)!</p>
+            <p>Explore tall grass for wild Pokemon encounters!</p>
+            <p>Avoid water patches and rocky terrain!</p>
+        </div>
+        <div id="gameOver" class="game-over hidden">
+            <h2>Adventure Complete!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Pokemon Trainer Rank: <span id="trainerRank">Rookie</span></p>
+            <button id="restartBtn">New Adventure</button>
+        </div>
     </div>
-    
-    <script src="google-pacman.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
