@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <title>Pokeman</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="alternate icon" href="favicon.svg">
@@ -19,16 +23,27 @@
             </div>
         </div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="mobile-controls">
+            <div class="d-pad">
+                <button class="direction-btn up" data-direction="up">↑</button>
+                <div class="d-pad-middle">
+                    <button class="direction-btn left" data-direction="left">←</button>
+                    <button class="direction-btn right" data-direction="right">→</button>
+                </div>
+                <button class="direction-btn down" data-direction="down">↓</button>
+            </div>
+        </div>
         <div class="game-controls">
-            <p>Use arrow keys to move Pikachu around the Pokemon world!</p>
-            <p>Collect pokeballs (+10), visit Pokemon Centers (+50), find Power Berries (+100)!</p>
-            <p>Explore tall grass for wild Pokemon encounters!</p>
+            <p class="desktop-instruction">Use arrow keys to move Pikachu around the Pokemon world!</p>
+            <p class="mobile-instruction">Swipe or use buttons to move Pikachu around the Pokemon world!</p>
+            <p>Collect pokeballs (+10), visit Pokeman Centers (+50), find Power Berries (+100)!</p>
+            <p>Explore tall grass for wild Pokeman encounters!</p>
             <p>Avoid water patches and rocky terrain!</p>
         </div>
         <div id="gameOver" class="game-over hidden">
             <h2>Adventure Complete!</h2>
             <p>Final Score: <span id="finalScore">0</span></p>
-            <p>Pokemon Trainer Rank: <span id="trainerRank">Rookie</span></p>
+            <p>Pokeman Trainer Rank: <span id="trainerRank">Rookie</span></p>
             <button id="restartBtn">New Adventure</button>
         </div>
     </div>
